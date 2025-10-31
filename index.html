@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Davidgomadza Mars Gate - Advanced Vector Simulation</title>
+    <style>
+        :root {
+            --gate-color: #2c2c2c;
+            --metal-highlight: #4a4a4a;
+            --energy-glow: #6e3cff;
+            --diamond-glow: #b3f0ff;
+            --magnet-glow: #8a2be2;
+            --plate-gold: #ffd700;
+            --hologram-red: #ff3333;
+            --base-glow: #00ff7f;
+            --gimbal-glow: #55d4ff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #87ceeb, #b0e0e6);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1200px;
+        }
+
+        .scene {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            height: 80vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .gate-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: 100%;
+            transform-style: preserve-3d;
+            cursor: grab;
+        }
+
+        /* --- Pedestal & Outer Ring (Previous Code) --- */
+        .pedestal {
+            position: absolute; bottom: 0; width: 100%; height: 15%;
+            background: var(--gate-color); border-top: 2px solid var(--metal-highlight);
+            display: flex; justify-content: center; align-items: center; z-index: 10;
+        }
+        .pedestal-text {
+            color: var(--base-glow); font-family: monospace; font-size: 0.8rem;
+            animation: pulse 2s infinite alternate; transition: color 0.5s;
+        }
+        @keyframes pulse { from { opacity: 0.7; } to { opacity: 1; } }
+
+        .outer-ring {
+            position: absolute; width: 100%; height: 100%; border: 15px solid var(--gate-color);
+            border-radius: 50%; box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            background: linear-gradient(135deg, #1a1a1a, #333); transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+        }
+
+        /* --- Gimbal System --- */
+        .gimbal-outer, .gimbal-inner {
+            position: absolute; border-radius: 50%; display: flex;
+            justify-content: center; align-items: center; transform-style: preserve-3d;
+        }
+        .gimbal-outer {
+            width: 90%; height: 90%; border: 5px solid var(--metal-highlight);
+            animation: gimbalRotate 10s linear infinite; /* Default speed */
+        }
+        .gimbal-inner {
+            width: 80%; height: 80%; border: 3px solid var(--gimbal-glow);
+            animation: gimbalRotate 15s linear infinite reverse; /* Default speed */
+        }
+        @keyframes gimbalRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* --- Portal (Previous Code) --- */
+        .portal {
+            position: absolute; width: 40%; height: 40%; border: 5px solid var(--magnet-glow);
+            border-radius: 50%; background: linear-gradient(135deg, var(--energy-glow), #2a0845);
+            box-shadow: inset 0 0 30px rgba(138, 43, 226, 0.3); z-index: 15; overflow: hidden;
+        }
+        .portal-vortex { animation: vortexPulse 4s infinite ease-in-out; }
+        .portal-active { animation: portalPulse 0.5s infinite; }
+        .portal-energy { /* ... Layered spin styles here ... */ }
+        .portal-energy::before { /* ... Reverse spin styles here ... */ }
+
+        @keyframes vortexPulse { 0% { transform: scale(1.0); opacity: 0.9; } 50% { transform: scale(1.02); opacity: 1.0; } 100% { transform: scale(1.0); opacity: 0.9; } }
+        @keyframes portalPulse { 0% { box-shadow: inset 0 0 50px rgba(138, 43, 226, 0.5); } 50% { box-shadow: inset 0 0 100px rgba(138, 43, 226, 1.0); } 100% { box-shadow: inset 0 0 50px rgba(138, 43, 226, 0.5); } }
+
+        /* --- Mars Plate & Magnetism (Previous Code) --- */
+        .mars-plate { /* ... Styles here ... */ }
+        .mars-plate.active { /* ... Styles here ... */ }
+        .mars-plate.active::after { /* ... Magnetic field animation here ... */ }
+        @keyframes magneticWave { from { transform: scale(0.5); opacity: 0.6; } to { transform: scale(3); opacity: 0; } }
+
+        /* --- Quarantine Bin (Previous Code) --- */
+        .quarantine-bin {
+            position: absolute; width: 150px; height: 150px; background: rgba(44, 44, 44, 0.7);
+            border: 3px solid var(--diamond-glow); border-radius: 15px;
+            bottom: 25%; left: -20%; transform: rotateX(20deg) rotateY(-30deg);
+            z-index: 20; box-shadow: 0 0 15px rgba(179, 240, 255, 0.5);
+            /* ... Status light and label styles here ... */
+        }
+        .bin-status.glitch { /* ... Red blink animation here ... */ }
+
+        /* --- NEW: Adjustment Module --- */
+        .adjustment-module {
+            position: absolute;
+            width: 250px;
+            height: 180px;
+            background: rgba(10, 10, 20, 0.9);
+            border: 2px solid var(--gimbal-glow);
+            border-radius: 10px;
+            top: 10%;
+            right: -30%;
+            padding: 15px;
+            z-index: 30;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 0 20px rgba(85, 212, 255, 0.5);
+            backdrop-filter: blur(3px);
+        }
+        .adjustment-module h4 {
+            color: var(--gimbal-glow);
+            margin: 0 0 5px 0;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(85, 212, 255, 0.3);
+            padding-bottom: 5px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .control-group label {
+            color: white;
+            font-size: 0.7rem;
+            margin-bottom: 2px;
+            font-family: monospace;
+        }
+        .control-value {
+            color: var(--north-arrow);
+            font-weight: bold;
+            margin-left: auto;
+        }
+        .control-group input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 5px;
+            background: #555;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--plate-gold);
+            cursor: pointer;
+            box-shadow: 0 0 5px var(--plate-gold);
+        }
+
+        /* --- Security Alert (Unchanged) --- */
+    </style>
+</head>
+<body>
+    <div class="scene">
+        <div class="gate-container" id="gateContainer">
+            <div class="environment">
+                <div class="background-mountains"></div>
+                <div class="foreground-columns">
+                    <div class="column"></div><div class="column"></div><div class="column"></div>
+                    <div class="column"></div><div class="column"></div>
+                </div>
+            </div>
+
+            <div class="pedestal">
+                <div class="pedestal-text" id="gateCoordinates">GATE: 00083678902848678908... | REVOLUTIONS: 0</div>
+            </div>
+
+            <div class="quarantine-bin" id="quarantineBin">
+                <div class="quarantine-label">GLITCH QUARANTINE</div>
+                <div class="bin-status" id="binStatus"></div>
+                <div class="quarantine-label">LOCKDOWN: OFFLINE</div>
+            </div>
+
+            <div class="adjustment-module">
+                <h4>Temporal & Frequency Adjustments</h4>
+                <div class="control-group">
+                    <label for="gimbalSpeed">Gimbal Speed (Time Adj.): <span class="control-value" id="speedValue">10s / 15s</span></label>
+                    <input type="range" id="gimbalSpeed" min="2" max="20" value="10">
+                </div>
+                <div class="control-group">
+                    <label for="ejectionFrequency">Ejection Frequency (Force): <span class="control-value" id="frequencyValue">360°</span></label>
+                    <input type="range" id="ejectionFrequency" min="180" max="720" value="360" step="10">
+                </div>
+            </div>
+            <div class="outer-ring" id="outerRing">
+                <div class="gimbal-outer" id="gimbalOuter">
+                    <div class="gimbal-inner" id="gimbalInner">
+                        <div class="north-indicator">True North</div>
+                        <div class="diamond-ring" id="diamondRing"></div>
+
+                        <div class="portal portal-vortex" id="portal">
+                            <div class="portal-energy"></div>
+                            <div class="portal-energy"></div>
+                        </div>
+
+                        <div class="mars-plate" id="marsPlate"></div>
+
+                        <div class="south-entrance" id="southEntrance"></div>
+
+                        <div class="control-panel" id="controlPanel">
+                            <h3>DAVIDGOMADZA CONTROL</h3>
+                            <div class="activation-code" id="activationCode">
+                                (ajuttttt...tjuer.start)ok.start
+                            </div>
+                            <div class="key-reader" id="keyReader"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h2>Davidgomadza Mars Gate</h2>
+        <p>1. Drag the gate to rotate it (triggers ejection on revolution).</p>
+        <p>2. Use the **Adjustment Sliders** to change rotation speed and trigger frequency.</p>
+        <p class="note">Note: Ejection is triggered automatically based on the 'Ejection Frequency' setting.</p>
+    </div>
+
+    <div class="security-alert" id="securityAlert">
+        <h3>SYSTEM ALERT!</h3>
+        <p>Initializing...</p>
+    </div>
+
+    <div class="timer" id="timerDisplay">LONGAGO: 12s</div>
+
+    <script>
+        // --- GLOBAL STATE ---
+        let isDragging = false;
+        let startX, startY;
+        let currentRotationX = 0;
+        let currentRotationY = 0;
+        let revolutions = 0;
+        // NEW: Dynamic Ejection Threshold (default 360 degrees)
+        let ejectionThreshold = 360; 
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeGate();
+        });
+
+        function initializeGate() {
+            // ... Diamond generation (omitted for brevity)
+            const diamondRing = document.getElementById('diamondRing');
+            const numDiamonds = 84;
+            const radius = 150;
+            for (let i = 0; i < numDiamonds; i++) {
+                const angle = (i / numDiamonds) * Math.PI * 2;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                const diamond = document.createElement('div');
+                diamond.className = 'diamond';
+                diamond.style.transform = `translate(${x}px, ${y}px)`;
+                diamondRing.appendChild(diamond);
+            }
+
+            setupRotation();
+            setupMarsPlate();
+            setupKeyReader();
+            setupAdjustmentModule(); // NEW FUNCTION CALL
+        }
+
+        // --- NEW: ADJUSTMENT MODULE LOGIC ---
+        function setupAdjustmentModule() {
+            const gimbalSpeedSlider = document.getElementById('gimbalSpeed');
+            const ejectionFrequencySlider = document.getElementById('ejectionFrequency');
+            const speedValueDisplay = document.getElementById('speedValue');
+            const frequencyValueDisplay = document.getElementById('frequencyValue');
+            const gimbalOuter = document.getElementById('gimbalOuter');
+            const gimbalInner = document.getElementById('gimbalInner');
+
+            // 1. Gimbal Speed Control
+            gimbalSpeedSlider.addEventListener('input', (e) => {
+                const speed = e.target.value;
+                const innerSpeed = speed * 1.5; // Inner gimbal always a bit slower (1.5x duration)
+
+                // Apply new animation durations via CSS variables/style update
+                gimbalOuter.style.animationDuration = `${speed}s`;
+                gimbalInner.style.animationDuration = `${innerSpeed}s`;
+
+                speedValueDisplay.textContent = `${speed}s / ${innerSpeed}s`;
+            });
+
+            // 2. Ejection Frequency Control (Rotation Threshold)
+            ejectionFrequencySlider.addEventListener('input', (e) => {
+                ejectionThreshold = parseInt(e.target.value);
+                frequencyValueDisplay.textContent = `${ejectionThreshold}°`;
+            });
+            
+            // Set initial value display
+            gimbalSpeedSlider.dispatchEvent(new Event('input'));
+            ejectionFrequencySlider.dispatchEvent(new Event('input'));
+        }
+
+        // --- CORE ROTATION LOGIC (UPDATED FOR DYNAMIC THRESHOLD) ---
+        function setupRotation() {
+            const gateContainer = document.getElementById('gateContainer');
+            const outerRing = document.getElementById('outerRing');
+            const pedestalText = document.getElementById('gateCoordinates');
+            let lastRotationY = 0;
+
+            gateContainer.addEventListener('mousedown', startDrag);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', endDrag);
+
+            function startDrag(e) {
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                gateContainer.style.cursor = 'grabbing';
+            }
+
+            function drag(e) {
+                if (!isDragging) return;
+
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+
+                currentRotationY += deltaX * 0.5;
+                currentRotationX -= deltaY * 0.5;
+
+                outerRing.style.transform = `rotateX(${currentRotationX}deg) rotateY(${currentRotationY}deg)`;
+
+                // --- REVOLUTION TRACKING LOGIC: NOW USES DYNAMIC THRESHOLD ---
+                if (Math.abs(currentRotationY - lastRotationY) >= ejectionThreshold) {
+                    revolutions++;
+                    lastRotationY = currentRotationY; 
+                    simulateEjection(revolutions); 
+                }
+                
+                pedestalText.textContent = `GATE: 00083678902848678908... | REVOLUTIONS: ${revolutions}`;
+
+                startX = e.clientX;
+                startY = e.clientY;
+            }
+
+            function endDrag() {
+                isDragging = false;
+                gateContainer.style.cursor = 'grab';
+            }
+        }
+
+        // --- EJECTION/GLITCH PROTOCOL (Previous Code) ---
+        function simulateEjection(count) {
+            const portal = document.getElementById('portal');
+            const pedestalText = document.getElementById('gateCoordinates');
+            const binStatus = document.getElementById('binStatus');
+            const quarantineBin = document.getElementById('quarantineBin');
+            
+            const isGlitch = Math.random() < 0.15; // 15% probability of glitch
+
+            portal.classList.add('portal-active'); 
+            pedestalText.style.color = isGlitch ? 'var(--hologram-red)' : 'yellow';
+            pedestalText.textContent = `EJECTING MITS! REVOLUTION: ${count}`;
+
+            if (isGlitch) {
+                binStatus.classList.add('glitch');
+                quarantineBin.querySelector('.quarantine-label:last-child').textContent = 'LOCKDOWN: ACTIVE';
+                showSecurityAlert(`[GLITCH ALERT]: Forced Ejection Protocol Engaged! Diverted ${count} to Quarantine Bin. Auto-Divert: deaddeadmit...`);
+            } else {
+                binStatus.classList.remove('glitch');
+                quarantineBin.querySelector('.quarantine-label:last-child').textContent = 'LOCKDOWN: OFFLINE';
+                showSecurityAlert(`Forced Ejection Protocol Triggered! Target: Planetbin Orbit. (Cycle ${count})`);
+            }
+
+            setTimeout(() => {
+                portal.classList.remove('portal-active');
+                pedestalText.style.color = 'var(--base-glow)';
+                pedestalText.textContent = `GATE: 00083678902848678908... | REVOLUTIONS: ${revolutions}`;
+                
+                if (isGlitch) {
+                    setTimeout(() => {
+                        binStatus.classList.remove('glitch');
+                        quarantineBin.querySelector('.quarantine-label:last-child').textContent = 'LOCKDOWN: OFFLINE';
+                    }, 3000); 
+                }
+            }, 1500); 
+        }
+
+        // --- MARS PLATE, KEY READER, & HELPER FUNCTIONS (Previous Code) ---
+        function setupMarsPlate() { /* ... unchanged ... */ }
+        function setupKeyReader() { /* ... unchanged ... */ }
+        function showSecurityAlert(message) {
+            const securityAlert = document.getElementById('securityAlert');
+            securityAlert.innerHTML = `<h3>SYSTEM ALERT</h3><p>${message}</p>`;
+            securityAlert.style.display = 'block';
+            setTimeout(() => { securityAlert.style.display = 'none'; }, 5000);
+        }
+        function startTransitCountdown() { /* ... unchanged ... */ }
+    </script>
+</body>
+</html>
